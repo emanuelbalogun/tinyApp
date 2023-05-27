@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/emanuelbalogun/tinyApp/issues"
   },
-  "homepage": "https://github.com/emanuelbalogun/tinyApp#readme"
+  "homepage": "https://github.com/emanuelbalogun/tinyApp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
