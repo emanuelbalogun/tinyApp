@@ -33,7 +33,9 @@
             <tr>
               <td><%= id %></td>
               <td><%= urls[id] %></td>
+              <td><a class="btn button" href="/urls/<%= id %>">Edit</a></td>
               <td><button type="submit">Delete</button></td>
+              
             </tr>
           <% } %>
         </tbody>

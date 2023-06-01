@@ -62,12 +62,18 @@ app.get("/hello", (req, res) => {
 app.post("/urls", (req, res) => {
   let tinyUrlId = generateRandomString(6);
   urlDatabase[tinyUrlId] = req.body.longURL;
-  res.redirect(`/urls/${tinyUrlId}`); // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls/${tinyUrlId}`); 
 });
 
 app.post("/urls/:id/update", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL;
-  res.redirect(`/urls`); // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls`); 
+});
+
+app.post("/login", (req, res) => {
+   
+   res.cookie(req.body.username);
+   res.redirect("/urls")
 });
 
 app.get("/u/:id", (req, res) => {
