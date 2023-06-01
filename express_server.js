@@ -12,7 +12,7 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
-const generateRandomString = function (randomLength) {
+const generateRandomString = function(randomLength) {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
   for (let i = 0; i < randomLength; ++i) {
@@ -40,7 +40,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.post("/urls/:id/delete", (req, res) => {  
+app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
@@ -62,12 +62,15 @@ app.get("/hello", (req, res) => {
 app.post("/urls", (req, res) => {
   let tinyUrlId = generateRandomString(6);
   urlDatabase[tinyUrlId] = req.body.longURL;
-res.redirect(`/urls/${tinyUrlId}`); // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls/${tinyUrlId}`); // Respond with 'Ok' (we will replace this)
 });
 
+app.post("/urls/:id/update", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL;
+  res.redirect(`/urls`); // Respond with 'Ok' (we will replace this)
+});
 
-
-app.get("/u/:id", (req, res) => {  
+app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[ req.params.id];
   console.log(longURL);
   res.redirect(longURL);
