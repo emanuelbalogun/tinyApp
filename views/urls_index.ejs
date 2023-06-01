@@ -20,7 +20,7 @@
     <%- include('partials/_header') %>
     <main style="margin: 1em;">
       <h3>My URLs</h3>
-      <a href="#">Create Tiny URL</a>
+      <form method="POST" action="/urls/9sm5xK/delete">
       <table class="table">
         <thead>
           <tr>
@@ -33,10 +33,12 @@
             <tr>
               <td><%= id %></td>
               <td><%= urls[id] %></td>
+              <td><button type="submit">Delete</button></td>
             </tr>
           <% } %>
         </tbody>
       </table>
+    </form>
     </main>
     <!-- Bootstrap JS -->
     <script

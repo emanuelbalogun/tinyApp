@@ -40,6 +40,11 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+app.post("/urls/:id/delete", (req, res) => {  
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
+});
+
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
@@ -52,16 +57,15 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+
+
 app.post("/urls", (req, res) => {
   let tinyUrlId = generateRandomString(6);
   urlDatabase[tinyUrlId] = req.body.longURL;
 res.redirect(`/urls/${tinyUrlId}`); // Respond with 'Ok' (we will replace this)
 });
 
-app.get("/urls/:id/delete", (req, res) => {  
-  delete urlDatabase[ req.params.id];
-  res.redirect("/urls");
-});
+
 
 app.get("/u/:id", (req, res) => {  
   const longURL = urlDatabase[ req.params.id];
