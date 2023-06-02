@@ -19,12 +19,17 @@
       </div>
     </div>
    
-    
+    <% if (cookies.username) { %>
+      <form method="POST" action="/logout">
+        <label for="username" >Logged in as: <%= cookies.username %></label><br>
+        <button type="submit">LogOut</button>
+      </form>
+    <%} else { %>
     <form method="POST" action="/login">
-      <label for="username" ><%= cookies.username %></label><br>
       <input type="text" placeholder="username" name="username"/>
       <button type="submit">Login</button>
     </form>
+    <% } %>
   </nav>
   
 </header>
