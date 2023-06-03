@@ -19,9 +19,9 @@
       </div>
     </div>
    
-    <% if (cookies.username) { %>
+    <% if (users.id) { %>
       <form method="POST" action="/logout">
-        <label for="username" >Logged in as: <%= cookies.username %></label><br>
+        <label for="username" >Logged in as: <%= users.id %></label><br>
         <button type="submit">LogOut</button>
       </form>
     <%} else { %>

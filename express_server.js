@@ -14,6 +14,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+const users = {
+  xyz123: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  rtu456: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 const generateRandomString = function (randomLength) {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -32,11 +45,9 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, username: req.cookies["user_id"] };
   app.locals = {
-    cookies:{
-      username: req.cookies["username"],
-    },
+    users
   };
 
   res.render("urls_index", templateVars);
@@ -47,12 +58,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  console.log("i came here");
   res.render("registration");
-});
-
-app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls");
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -63,8 +70,23 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
+});
+
+app.post("/register",(req,res) => {
+  const uniqueId = generateRandomString(6);
+  
+  const registeredUser = {id: uniqueId, email: req.body.email, password: req.body.password };
+   users[uniqueId] = registeredUser;
+   res.cookie("user_id",uniqueId);
+   res.redirect("/urls");
+});
+
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
 });
 
 app.post("/urls", (req, res) => {
@@ -83,10 +105,6 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
-app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
-});
 
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
