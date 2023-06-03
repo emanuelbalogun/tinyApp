@@ -36,6 +36,10 @@ const generateRandomString = function (randomLength) {
   return result;
 };
 
+const getUserByEmail = function(email) {
+  return (Object.values(users).includes(email))? users : null;
+}
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -45,7 +49,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["user_id"] };
+  const templateVars = { urls: urlDatabase, user_id: req.cookies["user_id"] };
   app.locals = {
     users
   };
@@ -76,6 +80,13 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/register",(req,res) => {
+  if (!req.body.email || req.body.password) {
+    return res.send(400,"Email and password cannot be empty");
+  }
+
+  if(getUserByEmail(req.body.email) !== null) {
+    return res.send(400,"Email already exist, please login instead");
+  }
   const uniqueId = generateRandomString(6);
   
   const registeredUser = {id: uniqueId, email: req.body.email, password: req.body.password };
@@ -101,7 +112,7 @@ app.post("/urls/:id/update", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+  res.cookie("user_id", req.body.username);
   res.redirect("/urls");
 });
 
