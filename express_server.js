@@ -1,22 +1,7 @@
 const express = require("express");
-const cookiesparser = require("cookie-parser");
-const bcencrypt = require("bcryptjs");
-const cookieSession = require("cookie-session");
-const { json } = require("body-parser");
 const app = express();
-//const bodyParser = require('body-parser');
 app.set("view engine", "ejs");
-
-app.use(cookieSession({
-  name: 'session',
-  keys: ['jgjgjgjg', 'hghghg', 'ututut', 'hfhfh'],
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
-
 app.use(express.urlencoded({ extended: true }));
-app.use(cookiesparser());
-//app.use(bodyParser.urlencoded({extended: false}));
 const PORT = 8080;
 
 const urlDatabase = {
@@ -37,7 +22,7 @@ const users = {
   },
 };
 
-const generateRandomString = function (randomLength) {
+const generateRandomString = function(randomLength) {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
   for (let i = 0; i < randomLength; ++i) {
@@ -55,18 +40,18 @@ const getUserByEmail = function(email) {
     }
   }
   return foundUser;
-}
+};
 
 app.get("/", (req,res) =>{
   res.send("Hello");
-})
+});
 app.get("/urls.json", (req, res) => {
   res.render("index");
 });
 
 app.get("/urls", (req, res) => {
-  const userid = req.cookies["user_id"] ;
-  const templateVars = { urls: urlDatabase, user_id: userid};
+  const userid = req.cookies["user_id"];
+  const templateVars = { urls: urlDatabase, userId: userid};
   app.locals = {
     cookies:{
       userID: userid,
@@ -80,7 +65,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.get("/register", (req, res) => {  
+app.get("/register", (req, res) => {
   res.render("registration");
 });
 
@@ -105,15 +90,15 @@ app.post("/register",(req,res) => {
     return res.status(400).send("Email and password cannot be blank");
   }
 
-  if(getUserByEmail(email) !== null) {
+  if (getUserByEmail(email) !== null) {
     return res.status(400).send("Email already exist, please login instead");
   }
   const uniqueId = generateRandomString(6);
   
   const registeredUser = {id: uniqueId, email: email, password: password };
-   users[uniqueId] = registeredUser;      
-   res.cookie("user_id",uniqueId);
-   res.redirect("/urls");
+  users[uniqueId] = registeredUser;
+  res.cookie("user_id",uniqueId);
+  res.redirect("/urls");
 });
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -134,17 +119,17 @@ app.post("/urls/:id/update", (req, res) => {
 
 app.get("/login", (req,res) => {
   res.render("login");
-})
+});
 
 app.post("/login", (req, res) => {
-  const email = req.body.email;  
+  const email = req.body.email;
   const user = getUserByEmail(email);
   const password = req.body.password;
-  if(user === null){
-   return res.status(403).send("The email entered does not exist. Please register to use the App");
+  if (user === null) {
+    return res.status(403).send("The email entered does not exist. Please register to use the App");
   }
 
-  if(user.password !== password){
+  if (user.password !== password) {
     return res.status(403).send("The email or password is not correct");
   }
   
