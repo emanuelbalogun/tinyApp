@@ -112,8 +112,12 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect(`/urls`);
 });
 
+app.get("/login", (req,res) => {
+  res.render(login.ejs);
+})
+
 app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body.username);
+  res.cookie("user_id", req.body.user_id);
   res.redirect("/urls");
 });
 
