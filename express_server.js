@@ -7,7 +7,7 @@ app.set("view engine", "ejs");
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookiesparser());
-app.use(bodyParser.urlencoded({extended: false}));
+//app.use(bodyParser.urlencoded({extended: false}));
 const PORT = 8080;
 
 const urlDatabase = {
@@ -41,10 +41,9 @@ const getUserByEmail = function(email) {
   return (Object.values(users).includes(email))? users : null;
 }
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
+app.get("/", (req,res) =>{
+  res.send("Hello");
+})
 app.get("/urls.json", (req, res) => {
   res.render("index");
 });
@@ -81,16 +80,19 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/register",(req,res) => {
-  if (!req.body.email || req.body.password) {
-    return res.status(400).send("Email and password cannot be empty");
+  
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!email || !password) {
+    return res.status(400).send("Email and password cannot be blank");
   }
 
-  if(getUserByEmail(req.body.email) !== null) {
+  if(getUserByEmail(email) !== null) {
     return res.status(400).send("Email already exist, please login instead");
   }
   const uniqueId = generateRandomString(6);
   
-  const registeredUser = {id: uniqueId, email: req.body.email, password: req.body.password };
+  const registeredUser = {id: uniqueId, email: email, password: email };
    users[uniqueId] = registeredUser;
    res.cookie("user_id",uniqueId);
    res.redirect("/urls");
@@ -113,7 +115,7 @@ app.post("/urls/:id/update", (req, res) => {
 });
 
 app.get("/login", (req,res) => {
-  res.render(login.ejs);
+  res.render("login");
 })
 
 app.post("/login", (req, res) => {
