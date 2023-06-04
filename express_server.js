@@ -1,9 +1,18 @@
 const express = require("express");
 const cookiesparser = require("cookie-parser");
-const bcencrypt = require('bcryptjs');
+const bcencrypt = require("bcryptjs");
+const cookieSession = require("cookie-session");
+const { json } = require("body-parser");
 const app = express();
 //const bodyParser = require('body-parser');
 app.set("view engine", "ejs");
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['jgjgjgjg', 'hghghg', 'ututut', 'hfhfh'],
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookiesparser());
@@ -38,7 +47,14 @@ const generateRandomString = function (randomLength) {
 };
 
 const getUserByEmail = function(email) {
-  return (Object.values(users).includes(email))? users : null;
+  let foundUser = null;
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      foundUser = user;
+    }
+  }
+  return foundUser;
 }
 
 app.get("/", (req,res) =>{
@@ -49,11 +65,14 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user_id: req.cookies["user_id"] };
+  const userid = req.cookies["user_id"] ;
+  const templateVars = { urls: urlDatabase, user_id: userid};
   app.locals = {
-    users
+    cookies:{
+      userID: userid,
+      user: users
+    }
   };
-
   res.render("urls_index", templateVars);
 });
 
@@ -61,8 +80,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.get("/register", (req, res) => {
-  console.log("i came here");
+app.get("/register", (req, res) => {  
   res.render("registration");
 });
 
@@ -92,8 +110,8 @@ app.post("/register",(req,res) => {
   }
   const uniqueId = generateRandomString(6);
   
-  const registeredUser = {id: uniqueId, email: email, password: email };
-   users[uniqueId] = registeredUser;
+  const registeredUser = {id: uniqueId, email: email, password: password };
+   users[uniqueId] = registeredUser;      
    res.cookie("user_id",uniqueId);
    res.redirect("/urls");
 });
@@ -119,14 +137,25 @@ app.get("/login", (req,res) => {
 })
 
 app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body.user_id);
+  const email = req.body.email;  
+  const user = getUserByEmail(email);
+  const password = req.body.password;
+  if(user === null){
+   return res.status(403).send("The email entered does not exist. Please register to use the App");
+  }
+
+  if(user.password !== password){
+    return res.status(403).send("The email or password is not correct");
+  }
+  
+  res.cookie("user_id", user.id);
   res.redirect("/urls");
 });
 
 
-app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls");
+app.get("/logout", (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect("/login");
 });
 
 app.listen(PORT, () => {

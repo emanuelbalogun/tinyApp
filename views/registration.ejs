@@ -13,11 +13,14 @@
 />
 </head>
 <body>
-  
+  <%- include('partials/_header') %>
   <form method="post" action="/register">
-    <input name="email" type="email" placeholder="email">
-    <input name="password" type ="password" placeholder="password">
-    <button type="submit" class="btn button">Register</button>
+    <h1>Create Account</h1>
+    <label for="email">Email Address</label><br>
+    <input name="email" id="email" type="email" placeholder="email"><br>
+    <label for="password">Password</label><br>
+    <input id="password" name="password" type ="password" placeholder="password"><br>
+    <button type="submit" class="btn btn-primary">Register</button>
   </form>
 
 
