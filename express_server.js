@@ -1,12 +1,13 @@
 const express = require("express");
-const app = express();
 const cookiesparser = require("cookie-parser");
+const bcencrypt = require('bcryptjs');
+const app = express();
 //const bodyParser = require('body-parser');
 app.set("view engine", "ejs");
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookiesparser());
-//app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({extended: false}));
 const PORT = 8080;
 
 const urlDatabase = {
@@ -81,11 +82,11 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/register",(req,res) => {
   if (!req.body.email || req.body.password) {
-    return res.send(400,"Email and password cannot be empty");
+    return res.status(400).send("Email and password cannot be empty");
   }
 
   if(getUserByEmail(req.body.email) !== null) {
-    return res.send(400,"Email already exist, please login instead");
+    return res.status(400).send("Email already exist, please login instead");
   }
   const uniqueId = generateRandomString(6);
   
