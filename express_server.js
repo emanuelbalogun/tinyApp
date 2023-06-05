@@ -5,9 +5,18 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = 8080;
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-};
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    userID : "emmanuelbalogun64@gmail.com"
+}};
 
 const users = {
   xyz123: {
@@ -21,6 +30,8 @@ const users = {
     password: "dishwasher-funk",
   },
 };
+
+
 
 const generateRandomString = function (randomLength) {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -89,7 +100,6 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userid = req.cookies ? req.cookies["user_id"] : null;
-  //const templateVars = { urls: urlDatabase, userID: userid };
   setLocalVariables(userid);
   res.render("urls_index");
 });
@@ -105,13 +115,13 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
   };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[req.params.id].longURL;
   if(longURL){
   res.redirect(longURL);
   }
@@ -129,12 +139,12 @@ app.post("/urls", (req, res) => {
     return res.status(400).send("Only signed in user can create tiny URL");
   }
   let tinyUrlId = generateRandomString(6);
-  urlDatabase[tinyUrlId] = req.body.longURL;
+  urlDatabase[tinyUrlId].longURL = req.body.longURL;
   res.redirect(`/urls/${tinyUrlId}`);
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls`);
 });
 
