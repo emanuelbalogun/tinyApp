@@ -20,7 +20,8 @@
     </div>
 
    <a class="btn btn-outline-primary" href ="/register" >Register</a>
-   <% if(cookies.userID){ %>   
+   <script>alert('<%= localvariables %>')</script>
+   <% if (localvariables.userID){ %>   
    <a class="btn btn-outline-secondary" href="/logout">Logout</a> 
    <% } else { %>
     <a class="btn btn-outline-secondary" href="/login"> Login </a>

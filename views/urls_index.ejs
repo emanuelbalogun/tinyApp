@@ -29,10 +29,10 @@
           </tr>
         </thead>
         <tbody>
-          <% for (let id in urls) { %>
+          <% for (let id in localvariables.urls) { %>
             <tr>
               <td><%= id %></td>
-              <td><%= urls[id] %></td>
+              <td><%= localvariables.urls[id] %></td>
               <td><a class="btn button" href="/urls/<%= id %>">Edit</a></td>
               <td><button type="submit">Delete</button></td>
               
