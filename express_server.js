@@ -42,26 +42,23 @@ const getUserByEmail = function (email) {
   return foundUser;
 };
 
-const logedInUser = function (req) {
-  console.log(req.body);
-  if (req.cookies) {
-    return req.cookies["user_id"] ? true : false;
-  }
-  return false;
+const logedInUser = function () { 
+    return app.locals.localvariables.userID ? true : false;
 };
 
 app.get("/", (req, res) => {
   res.send("Hello");
 });
 
-
 ///////////////////////////////////////////////////
 // Registration routes
 ///////////////////////////////////////////////////
-app.get("/register", (req, res) => { 
-  
+app.get("/register", (req, res) => {
+  if (logedInUser()) {
+    res.render("urls_index");
+  } else {
     res.render("registration");
-  
+  }
 });
 
 app.post("/register", (req, res) => {
@@ -78,7 +75,7 @@ app.post("/register", (req, res) => {
 
   const registeredUser = { id: uniqueId, email: email, password: password };
   users[uniqueId] = registeredUser;
- // res.cookie("user_id", uniqueId);
+  // res.cookie("user_id", uniqueId);
   res.redirect("/urls");
 });
 
@@ -98,14 +95,12 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  //if (!logedInUser(req)) {
-    //res.redirect("/login");
-  //} else {
+  if (!logedInUser()) {
+    res.render("/login");
+  } else {
     res.render("urls_new");
-  //}
+  }
 });
-
-
 
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
@@ -117,7 +112,12 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
+  if(longURL){
   res.redirect(longURL);
+  }
+  else{
+    res.status(400).send("The URL specified does not exist");
+  }
 });
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
@@ -125,7 +125,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  if (!logedInUser(req)) {
+  if (!logedInUser()) {
     return res.status(400).send("Only signed in user can create tiny URL");
   }
   let tinyUrlId = generateRandomString(6);
@@ -143,11 +143,11 @@ app.post("/urls/:id/update", (req, res) => {
 ///////////////////////////////////////////////////
 
 app.get("/login", (req, res) => {
-  // if (logedInUser(req)) {
-    // res.redirect("/urls");
-  // } else {
+  if (logedInUser()) {
+    res.render("urls_index");
+  } else {
     res.render("login");
-  // }
+  }
 });
 
 app.post("/login", (req, res) => {
@@ -175,21 +175,17 @@ app.get("/logout", (req, res) => {
   res.render("login");
 });
 ///////////////////////////////////////////////////
-// Port listening 
+// Port listening
 ///////////////////////////////////////////////////
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
 function setLocalVariables(userid) {
-    app.locals = { 
-      localvariables:{     
-      userID: userid, 
-      urls: urlDatabase
-      }   
-    }; 
+  app.locals = {
+    localvariables: {
+      userID: userid,
+      urls: urlDatabase,
+    },
+  };
 }
-
-
-
-
