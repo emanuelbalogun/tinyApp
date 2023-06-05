@@ -32,7 +32,7 @@
           <% for (let id in localvariables.urls) { %>
             <tr>
               <td><%= id %></td>
-              <td><%= localvariables.urls[id] %></td>
+              <td><%= localvariables.urls[id].longURL %></td>
               <td><a class="btn button" href="/urls/<%= id %>">Edit</a></td>
               <td><button type="submit">Delete</button></td>
               
