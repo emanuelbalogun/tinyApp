@@ -21,6 +21,7 @@
     <main style="margin: 1em;">
       <h3>My URLs</h3>
       <form method="POST" action="/urls/9sm5xK/delete">
+        <script>alert("<%= localvariables.urls %>")</script>
       <table class="table">
         <thead>
           <tr>
@@ -29,11 +30,11 @@
           </tr>
         </thead>
         <tbody>
-          <% for (let id in localvariables.urls) { %>
+          <% for (let item in localvariables.urls) { %>
             <tr>
-              <td><%= id %></td>
-              <td><%= localvariables.urls[id].longURL %></td>
-              <td><a class="btn button" href="/urls/<%= id %>">Edit</a></td>
+              <td><%= localvariables.id %></td>
+              <td><%= localvariables.urls.longURL %></td>
+              <td><a class="btn button" href="/urls/<%= localvariables.id %>">Edit</a></td>
               <td><button type="submit">Delete</button></td>
               
             </tr>

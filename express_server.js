@@ -1,4 +1,5 @@
 const express = require("express");
+const { url } = require("inspector");
 const app = express();
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -15,23 +16,22 @@ const urlDatabase = {
   },
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
-    userID : "emmanuelbalogun64@gmail.com"
-}};
+    userID: "emmanuelbalogun64@gmail.com",
+  },
+};
 
 const users = {
   xyz123: {
-    id: "userRandomID",
+    id: "xyz123",
     email: "user@example.com",
     password: "purple-monkey-dinosaur",
   },
   rtu456: {
-    id: "user2RandomID",
+    id: "rtu456",
     email: "user2@example.com",
     password: "dishwasher-funk",
   },
 };
-
-
 
 const generateRandomString = function (randomLength) {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -53,8 +53,8 @@ const getUserByEmail = function (email) {
   return foundUser;
 };
 
-const logedInUser = function () { 
-    return app.locals.localvariables.userID ? true : false;
+const logedInUser = function () {
+  return app.locals.localvariables.userID;
 };
 
 app.get("/", (req, res) => {
@@ -99,53 +99,84 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userid = req.cookies ? req.cookies["user_id"] : null;
-  setLocalVariables(userid);
-  res.render("urls_index");
+  
+  if(app.locals.localvariables === undefined) {setLocalVariables(null)};
+  
+  if (logedInUser()) {
+    res.render("urls_index");
+  } else {
+    
+    res
+      .status(400)
+      .send(
+        `<h1>Kindly <a href="/login">log in</a> or <a href="/register">Register</a>to have access to this page</h1>`
+      );
+  }
 });
 
 app.get("/urls/new", (req, res) => {
   if (!logedInUser()) {
-    res.render("/login");
+    res.render("login");
   } else {
     res.render("urls_new");
   }
 });
 
 app.get("/urls/:id", (req, res) => {
+  const userid = logedInUser();
+  const id = req.params.id;
+  console.log(specificurlsForUser(userid,id));
   const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
+    id: id,
+    longURL:  specificurlsForUser(userid,id).longURL
   };
+   
+  if(!templateVars.longURL){
+    return res.status(400).send("You were trying to view non existing URLS");
+  }
+
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
-  if(longURL){
-  res.redirect(longURL);
-  }
-  else{
+  const userid = logedInUser();
+  if(userid) {
+  const longURL = specificurlsForUser(userid,req.params.id).longURL;
+  if (longURL) {
+    res.redirect(longURL);
+  } else {
     res.status(400).send("The URL specified does not exist");
   }
+}
 });
+
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
+  const userid = logedInUser();
+  if(userid) {
+  delete urlsForUser(userid)[req.params.id];
   res.redirect("/urls");
+  }
 });
 
 app.post("/urls", (req, res) => {
-  if (!logedInUser()) {
+  let userid = logedInUser();
+  if (!userid) {
     return res.status(400).send("Only signed in user can create tiny URL");
   }
   let tinyUrlId = generateRandomString(6);
-  urlDatabase[tinyUrlId].longURL = req.body.longURL;
+  urlDatabase[tinyUrlId] = {longURL: req.body.longURL, userID: userid };
+  setLocalVariables(userid);
   res.redirect(`/urls/${tinyUrlId}`);
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  urlDatabase[req.params.id].longURL = req.body.longURL;
-  res.redirect(`/urls`);
+  const userid = logedInUser();
+  if(userid) { 
+    if(specificurlsForUser(userid,req.params.id)){
+      urlDatabase[req.params.id].longURL = req.body.longURL;
+    }
+    res.redirect("/urls");
+  }
 });
 
 ///////////////////////////////////////////////////
@@ -192,10 +223,46 @@ app.listen(PORT, () => {
 });
 
 function setLocalVariables(userid) {
+  let email = userid ? users[userid].email: "";
+  const result = urlsForUser(userid);
+  let url = {};
+if(result) {
+  for (const [key, value] of Object.entries(result)) {
+    if(key ==="longURL"){
+      url["longURL"]= value;
+    }
+  }
+}
   app.locals = {
     localvariables: {
       userID: userid,
-      urls: urlDatabase,
+      id: userid,
+      urls: url,
     },
   };
 }
+
+const urlsForUser = function (id) {
+  const asArray = Object.entries(urlDatabase);
+  const filtered = asArray.filter(([key, value]) => value.userID === id);
+  const obj = Object.fromEntries(filtered);
+  
+  for (let key in obj) {
+    if (typeof obj[key] === "object") {
+      for (let nestedKey in obj[key]) {
+        return  obj[key];
+      }
+    }   
+}};
+
+
+const specificurlsForUser = function (userid,id) {
+  const asArray = Object.entries(urlDatabase);
+  const filtered = asArray.filter(([key, value]) => value.userID === userid);
+  
+  const obj = Object.fromEntries(filtered);  
+    
+    return obj[`${id}`];
+};
+
+
