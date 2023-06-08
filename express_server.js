@@ -1,8 +1,11 @@
 const express = require("express");
 const { url } = require("inspector");
+const cookieParser = require("cookie-parser");
 const app = express();
+app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+
 const PORT = 8080;
 
 const urlDatabase = {
@@ -23,13 +26,13 @@ const urlDatabase = {
 const users = {
   xyz123: {
     id: "xyz123",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    email: "a@a.com",
+    password: "abcd",
   },
   rtu456: {
     id: "rtu456",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "abcd",
   },
 };
 
@@ -51,10 +54,6 @@ const getUserByEmail = function (email) {
     }
   }
   return foundUser;
-};
-
-const logedInUser = function () {
-  return app.locals.localvariables.userID;
 };
 
 app.get("/", (req, res) => {
@@ -99,39 +98,45 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  
-  if(app.locals.localvariables === undefined) {setLocalVariables(null)};
-  
-  if (logedInUser()) {
-    res.render("urls_index");
-  } else {
-    
-    res
+  const user_id = req.cookies.user_id;
+
+  if (!user_id) {
+    return res
       .status(400)
       .send(
         `<h1>Kindly <a href="/login">log in</a> or <a href="/register">Register</a>to have access to this page</h1>`
       );
   }
+
+  const urls = urlsForUser(urlDatabase, user_id);
+  console.log("-------------", user_id, urls);
+  const templateVars = {
+    urls,
+    user_id,
+  };
+
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!logedInUser()) {
-    res.render("login");
-  } else {
-    res.render("urls_new");
+  const user_id = req.cookies.user_id;
+  if (!user_id) {
+    return res.redirect("login");
   }
+  res.render("urls_new", { user_id });
 });
 
 app.get("/urls/:id", (req, res) => {
-  const userid = logedInUser();
+  const user_id = req.cookies.user_id;
   const id = req.params.id;
-  console.log(specificurlsForUser(userid,id));
+
   const templateVars = {
-    id: id,
-    longURL:  specificurlsForUser(userid,id).longURL
+    id,
+    user_id,
+    urls: urlsForUser(urlDatabase, user_id),
   };
-   
-  if(!templateVars.longURL){
+
+  if (!templateVars.urls) {
     return res.status(400).send("You were trying to view non existing URLS");
   }
 
@@ -139,41 +144,51 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const userid = logedInUser();
-  if(userid) {
-  const longURL = specificurlsForUser(userid,req.params.id).longURL;
-  if (longURL) {
-    res.redirect(longURL);
-  } else {
-    res.status(400).send("The URL specified does not exist");
+  const user_id = req.cookies.user_id;
+  if (!user_id) {
+    return res.status(400).send("You have to login to view short URL(s)");
   }
-}
+  const id = req.params.id;
+  const url = urlsForUser(urlDatabase, user_id); //urlDatabase[id].longURL;
+  if (!url[id]) {
+    return res
+      .status(400)
+      .send("The URL specified does not exist or does not belong to you");
+  }
+  res.redirect(url[id].longURL);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const userid = logedInUser();
-  if(userid) {
-  delete urlsForUser(userid)[req.params.id];
-  res.redirect("/urls");
+  const user_id = req.cookies.user_id;
+  const id = req.params.id;
+  if (user_id) {
+    const url = urlsForUser(urlDatabase, user_id);
+    if (url[id]) {
+      delete urlDatabase[id];
+    }
+    res.redirect("/urls");
   }
 });
 
 app.post("/urls", (req, res) => {
-  let userid = logedInUser();
-  if (!userid) {
+  let user_id = req.cookies.user_id;
+
+  if (!user_id) {
     return res.status(400).send("Only signed in user can create tiny URL");
   }
   let tinyUrlId = generateRandomString(6);
-  urlDatabase[tinyUrlId] = {longURL: req.body.longURL, userID: userid };
-  setLocalVariables(userid);
+  urlDatabase[tinyUrlId] = { longURL: req.body.longURL, userID: user_id };
+  //setLocalVariables(userid);
   res.redirect(`/urls/${tinyUrlId}`);
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  const userid = logedInUser();
-  if(userid) { 
-    if(specificurlsForUser(userid,req.params.id)){
-      urlDatabase[req.params.id].longURL = req.body.longURL;
+  const user_id = req.cookies.user_id;
+  const id = req.params.id;
+  if (user_id) {
+    const urls = urlsForUser(urlDatabase, user_id);
+    if (urls[id]) {
+      urlDatabase[id].longURL = req.body.longURL;
     }
     res.redirect("/urls");
   }
@@ -184,8 +199,9 @@ app.post("/urls/:id/update", (req, res) => {
 ///////////////////////////////////////////////////
 
 app.get("/login", (req, res) => {
-  if (logedInUser()) {
-    res.render("urls_index");
+  const userid = req.cookies.userid;
+  if (userid) {
+    res.redirect("/urls");
   } else {
     res.render("login");
   }
@@ -207,7 +223,7 @@ app.post("/login", (req, res) => {
 
   res.cookie("user_id", user.id);
   setLocalVariables(user.id);
-  res.render("urls_index");
+  res.redirect("/urls");
 });
 
 app.get("/logout", (req, res) => {
@@ -223,16 +239,16 @@ app.listen(PORT, () => {
 });
 
 function setLocalVariables(userid) {
-  let email = userid ? users[userid].email: "";
+  let email = userid ? users[userid].email : "";
   const result = urlsForUser(userid);
   let url = {};
-if(result) {
-  for (const [key, value] of Object.entries(result)) {
-    if(key ==="longURL"){
-      url["longURL"]= value;
+  if (result) {
+    for (const [key, value] of Object.entries(result)) {
+      if (key === "longURL") {
+        url["longURL"] = value;
+      }
     }
   }
-}
   app.locals = {
     localvariables: {
       userID: userid,
@@ -242,27 +258,35 @@ if(result) {
   };
 }
 
-const urlsForUser = function (id) {
-  const asArray = Object.entries(urlDatabase);
-  const filtered = asArray.filter(([key, value]) => value.userID === id);
-  const obj = Object.fromEntries(filtered);
-  
-  for (let key in obj) {
-    if (typeof obj[key] === "object") {
-      for (let nestedKey in obj[key]) {
-        return  obj[key];
-      }
-    }   
-}};
+// const urlsForUser = function (id) {
+//   const asArray = Object.entries(urlDatabase);
+//   const filtered = asArray.filter(([key, value]) => value.userID === id);
+//   const obj = Object.fromEntries(filtered);
 
+//   for (let key in obj) {
+//     if (typeof obj[key] === "object") {
+//       for (let nestedKey in obj[key]) {
+//         return  obj[key];
+//       }
+//     }
+// }};
 
-const specificurlsForUser = function (userid,id) {
-  const asArray = Object.entries(urlDatabase);
-  const filtered = asArray.filter(([key, value]) => value.userID === userid);
-  
-  const obj = Object.fromEntries(filtered);  
-    
-    return obj[`${id}`];
+const urlsForUser = function (urldatabase, userid) {
+  const result = {};
+  for (let shortUrl in urldatabase) {
+    if (urldatabase[shortUrl].userID === userid) {
+      result[shortUrl] = urldatabase[shortUrl];
+    }
+  }
+
+  return result;
 };
 
+const specificurlsForUser = function (userid, id) {
+  const asArray = Object.entries(urlDatabase);
+  const filtered = asArray.filter(([key, value]) => value.userID === userid);
 
+  const obj = Object.fromEntries(filtered);
+
+  return obj[`${id}`];
+};
