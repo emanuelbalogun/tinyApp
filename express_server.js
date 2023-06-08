@@ -1,7 +1,7 @@
 const express = require("express");
 const { url } = require("inspector");
 const bcrypt = require("bcryptjs");
-const { getUserByEmail } = require("./helper");
+const { getUserByEmail } = require("./helpers");
 //const cookieParser = require("cookie-parser");
 var cookieSession = require('cookie-session')
 const saltRounds = 10;
