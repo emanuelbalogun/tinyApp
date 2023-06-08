@@ -1,8 +1,19 @@
 const express = require("express");
 const { url } = require("inspector");
-const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
+//const cookieParser = require("cookie-parser");
+var cookieSession = require('cookie-session')
+const saltRounds = 10;
 const app = express();
-app.use(cookieParser());
+//app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: [/* secret keys */],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
@@ -64,10 +75,14 @@ app.get("/", (req, res) => {
 // Registration routes
 ///////////////////////////////////////////////////
 app.get("/register", (req, res) => {
-  if (logedInUser()) {
+  const user_id = req.cookies.user_id;
+  if (user_id) {
     res.render("urls_index");
   } else {
-    res.render("registration");
+    let templateVars = {
+      user_id
+    }
+    res.render("registration", templateVars);
   }
 });
 
@@ -82,10 +97,10 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Email already exist, please login instead");
   }
   const uniqueId = generateRandomString(6);
-
-  const registeredUser = { id: uniqueId, email: email, password: password };
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const hash = bcrypt.hashSync(password, salt);
+  const registeredUser = { id: uniqueId, email: email, password: hash };
   users[uniqueId] = registeredUser;
-  // res.cookie("user_id", uniqueId);
   res.redirect("/urls");
 });
 
@@ -109,7 +124,6 @@ app.get("/urls", (req, res) => {
   }
 
   const urls = urlsForUser(urlDatabase, user_id);
-  console.log("-------------", user_id, urls);
   const templateVars = {
     urls,
     user_id,
@@ -199,11 +213,12 @@ app.post("/urls/:id/update", (req, res) => {
 ///////////////////////////////////////////////////
 
 app.get("/login", (req, res) => {
-  const userid = req.cookies.userid;
-  if (userid) {
+  const user_id = req.cookies.userid;
+  if (user_id) {
     res.redirect("/urls");
   } else {
-    res.render("login");
+    let templateVars = { user_id};
+    res.render("login", templateVars);
   }
 });
 
@@ -217,19 +232,19 @@ app.post("/login", (req, res) => {
       .send("The email entered does not exist. Please register to use the App");
   }
 
-  if (user.password !== password) {
+  if (!bcrypt.compareSync(password, user.password)) {
     return res.status(403).send("The email or password is not correct");
   }
 
-  res.cookie("user_id", user.id);
-  setLocalVariables(user.id);
+  req.session.user_id = user_id;
+  
   res.redirect("/urls");
 });
 
 app.get("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  setLocalVariables(null);
-  res.render("login");
+  req.session = null
+  res.session = null;
+  res.redirect("login");
 });
 ///////////////////////////////////////////////////
 // Port listening
@@ -237,39 +252,6 @@ app.get("/logout", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-function setLocalVariables(userid) {
-  let email = userid ? users[userid].email : "";
-  const result = urlsForUser(userid);
-  let url = {};
-  if (result) {
-    for (const [key, value] of Object.entries(result)) {
-      if (key === "longURL") {
-        url["longURL"] = value;
-      }
-    }
-  }
-  app.locals = {
-    localvariables: {
-      userID: userid,
-      id: userid,
-      urls: url,
-    },
-  };
-}
-
-// const urlsForUser = function (id) {
-//   const asArray = Object.entries(urlDatabase);
-//   const filtered = asArray.filter(([key, value]) => value.userID === id);
-//   const obj = Object.fromEntries(filtered);
-
-//   for (let key in obj) {
-//     if (typeof obj[key] === "object") {
-//       for (let nestedKey in obj[key]) {
-//         return  obj[key];
-//       }
-//     }
-// }};
 
 const urlsForUser = function (urldatabase, userid) {
   const result = {};
@@ -282,11 +264,4 @@ const urlsForUser = function (urldatabase, userid) {
   return result;
 };
 
-const specificurlsForUser = function (userid, id) {
-  const asArray = Object.entries(urlDatabase);
-  const filtered = asArray.filter(([key, value]) => value.userID === userid);
 
-  const obj = Object.fromEntries(filtered);
-
-  return obj[`${id}`];
-};
