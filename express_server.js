@@ -8,7 +8,7 @@ const app = express();
 //app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
-  keys: [/* secret keys */],
+  keys: ["Ilove20$","Ihate30$","Ilike40$"],
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -56,10 +56,10 @@ const generateRandomString = function (randomLength) {
   return result;
 };
 
-const getUserByEmail = function (email) {
+const getUserByEmail = function (email,database) {
   let foundUser = null;
-  for (const userId in users) {
-    const user = users[userId];
+  for (const userId in database) {
+    const user = database[userId];
     if (user.email === email) {
       foundUser = user;
     }
@@ -93,7 +93,7 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Email and password cannot be blank");
   }
 
-  if (getUserByEmail(email) !== null) {
+  if (getUserByEmail(email,users) !== null) {
     return res.status(400).send("Email already exist, please login instead");
   }
   const uniqueId = generateRandomString(6);
@@ -213,7 +213,7 @@ app.post("/urls/:id/update", (req, res) => {
 ///////////////////////////////////////////////////
 
 app.get("/login", (req, res) => {
-  const user_id = req.cookies.userid;
+  const user_id = req.session.user_id;
   if (user_id) {
     res.redirect("/urls");
   } else {
@@ -224,7 +224,7 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   const email = req.body.email;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email,users);
   const password = req.body.password;
   if (user === null) {
     return res
@@ -236,14 +236,13 @@ app.post("/login", (req, res) => {
     return res.status(403).send("The email or password is not correct");
   }
 
-  req.session.user_id = user_id;  
+  req.session.user_id = user.id;  
   res.redirect("/urls");
 });
 
 app.get("/logout", (req, res) => {
   req.session = null
-  res.session = null;
-  res.redirect("login");
+  res.redirect("/login");
 });
 ///////////////////////////////////////////////////
 // Port listening
