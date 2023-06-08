@@ -75,7 +75,7 @@ app.get("/", (req, res) => {
 // Registration routes
 ///////////////////////////////////////////////////
 app.get("/register", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   if (user_id) {
     res.render("urls_index");
   } else {
@@ -113,7 +113,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
 
   if (!user_id) {
     return res
@@ -133,7 +133,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   if (!user_id) {
     return res.redirect("login");
   }
@@ -141,7 +141,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const id = req.params.id;
 
   const templateVars = {
@@ -158,7 +158,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   if (!user_id) {
     return res.status(400).send("You have to login to view short URL(s)");
   }
@@ -173,7 +173,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const id = req.params.id;
   if (user_id) {
     const url = urlsForUser(urlDatabase, user_id);
@@ -185,7 +185,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let user_id = req.cookies.user_id;
+  let user_id = req.session.user_id;
 
   if (!user_id) {
     return res.status(400).send("Only signed in user can create tiny URL");
@@ -197,7 +197,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const id = req.params.id;
   if (user_id) {
     const urls = urlsForUser(urlDatabase, user_id);
@@ -236,8 +236,7 @@ app.post("/login", (req, res) => {
     return res.status(403).send("The email or password is not correct");
   }
 
-  req.session.user_id = user_id;
-  
+  req.session.user_id = user_id;  
   res.redirect("/urls");
 });
 
