@@ -1,10 +1,12 @@
 const express = require("express");
 const { url } = require("inspector");
 const bcrypt = require("bcryptjs");
+const { getUserByEmail } = require("./helper");
 //const cookieParser = require("cookie-parser");
 var cookieSession = require('cookie-session')
 const saltRounds = 10;
 const app = express();
+
 //app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
@@ -56,16 +58,7 @@ const generateRandomString = function (randomLength) {
   return result;
 };
 
-const getUserByEmail = function (email,database) {
-  let foundUser = null;
-  for (const userId in database) {
-    const user = database[userId];
-    if (user.email === email) {
-      foundUser = user;
-    }
-  }
-  return foundUser;
-};
+
 
 app.get("/", (req, res) => {
   res.send("Hello");
