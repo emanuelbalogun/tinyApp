@@ -1,4 +1,4 @@
-const getUserByEmail = function (email,database) {
+const getUserByEmail = function(email,database) {
   let foundUser = null;
   for (const userId in database) {
     const user = database[userId];

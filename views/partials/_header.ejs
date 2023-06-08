@@ -19,11 +19,13 @@
       </div>
     </div>
 
-   <a class="btn btn-outline-primary" href ="/register" >Register</a>
+   
    
    <% if (user_id){ %>   
    <a class="btn btn-outline-secondary" href="/logout">Logout</a> 
+   <label name=" email"> <%= email %></label>
    <% } else { %>
+    <a class="btn btn-outline-primary" href ="/register" >Register</a>
     <a class="btn btn-outline-secondary" href="/login"> Login </a>
    <% } %>
   </nav>
