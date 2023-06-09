@@ -1,81 +1,26 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const { getUserByEmail } = require("./helpers");
-var cookieSession = require("cookie-session");
+const {
+  getUserByEmail,
+  generateRandomString,
+  urlsForUser,
+  getUserEmail,
+} = require("./helpers");
+const { urlDatabase, users } = require("./database.js");
+let cookieSession = require("cookie-session");
 const saltRounds = 10;
 const app = express();
+const PORT = 8080;
 
 app.use(
   cookieSession({
     name: "session",
     keys: ["Ilove20$", "Ihate30$", "Ilike40$"],
-
-    // Cookie Options
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
   })
 );
-
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-
-const PORT = 8080;
-
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-  b2xVn2: {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "emmanuelbalogun64@gmail.com",
-  },
-};
-
-const users = {
-  xyz123: {
-    id: "xyz123",
-    email: "a@a.com",
-    password: "abcd",
-  },
-  rtu456: {
-    id: "rtu456",
-    email: "user2@example.com",
-    password: "abcd",
-  },
-};
-/////////////////////////////////////////////
-//////////////Helper Functions///////////////
-////////////////////////////////////////////
-const urlsForUser = function (urldatabase, userid) {
-  const result = {};
-  for (let shortUrl in urldatabase) {
-    if (urldatabase[shortUrl].userID === userid) {
-      result[shortUrl] = urldatabase[shortUrl];
-    }
-  }
-
-  return result;
-};
-const generateRandomString = function (randomLength) {
-  const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < randomLength; ++i) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
-
-const getUserEmail = function (user_id, users) {
-  return users[user_id].email;
-}
-/////////////////////////////////////////////
-//////////////End of Helper Functions///////////////
-////////////////////////////////////////////
-
 app.get("/", (req, res) => {
   res.send("Hello");
 });
@@ -85,14 +30,14 @@ app.get("/", (req, res) => {
 ///////////////////////////////////////////////////
 app.get("/register", (req, res) => {
   const user_id = req.session.user_id;
-  const email = users[user_id] ? users[user_id].email: "";
+  const email = users[user_id] ? users[user_id].email : "";
   const templateVars = {
-    user_id, email
+    user_id,
+    email,
   };
   if (user_id) {
     res.render("urls_index");
   } else {
-    
     res.render("registration", templateVars);
   }
 });
@@ -134,12 +79,12 @@ app.get("/urls", (req, res) => {
       );
   }
 
-  const urls = urlsForUser(urlDatabase, user_id); 
-  const email = user_id ? getUserEmail(user_id, users): "";
+  const urls = urlsForUser(urlDatabase, user_id);
+  const email = user_id ? getUserEmail(user_id, users) : "";
   const templateVars = {
     urls,
     user_id,
-    email
+    email,
   };
 
   res.render("urls_index", templateVars);
@@ -149,11 +94,11 @@ app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
   if (!user_id) {
     return res.redirect("login");
-  }  
-       
-  const  email = getUserEmail(user_id, users)
-  
-  res.render("urls_new", { user_id,email });
+  }
+
+  const email = getUserEmail(user_id, users);
+
+  res.render("urls_new", { user_id, email });
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -164,7 +109,7 @@ app.get("/urls/:id", (req, res) => {
     id,
     user_id,
     urls: urlsForUser(urlDatabase, user_id),
-    email: getUserEmail(user_id, users)
+    email: getUserEmail(user_id, users),
   };
 
   if (!templateVars.urls) {
@@ -180,7 +125,7 @@ app.get("/u/:id", (req, res) => {
     return res.status(400).send("You have to login to view short URL(s)");
   }
   const id = req.params.id;
-  const url = urlsForUser(urlDatabase, user_id); //urlDatabase[id].longURL;
+  const url = urlsForUser(urlDatabase, user_id);
   if (!url[id]) {
     return res
       .status(400)
@@ -209,20 +154,24 @@ app.post("/urls", (req, res) => {
   }
   let tinyUrlId = generateRandomString(6);
   urlDatabase[tinyUrlId] = { longURL: req.body.longURL, userID: user_id };
-  
+
   res.redirect(`/urls/${tinyUrlId}`);
 });
 
-app.post("/urls/:id/update", (req, res) => {
+app.post("/urls/:id", (req, res) => {
   const user_id = req.session.user_id;
   const id = req.params.id;
-  if (user_id) {
-    const urls = urlsForUser(urlDatabase, user_id);
-    if (urls[id]) {
-      urlDatabase[id].longURL = req.body.longURL;
-    }
-    res.redirect("/urls");
+
+  if (!user_id) {
+    return res.status(400).send("Only signed inuser can update owned URL(s)");
   }
+  const urls = urlsForUser(urlDatabase, user_id);
+  if (!urls[id]) {
+    return res.status(400).send("You can only update owned URL(s)");
+  }
+
+  urlDatabase[id].longURL = req.body.longURL;
+  res.redirect("/urls");
 });
 
 ///////////////////////////////////////////////////
@@ -238,7 +187,6 @@ app.get("/login", (req, res) => {
   if (user_id) {
     res.redirect("/urls");
   } else {
-    
     const templateVars = { user_id };
     res.render("login", templateVars);
   }
@@ -276,5 +224,3 @@ app.get("/logout", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-
