@@ -37,12 +37,12 @@ const generateRandomString = function(randomLength) {
   for (let i = 0; i < randomLength; ++i) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
-  
+
   return result;
 };
 /**Function return the email address of a given user id */
 const getUserEmail = function(user_id, users) {
-  return users[user_id].email;
+  return users[user_id] ? users[user_id].email: undefined;
 };
 /////////////////////////////////////////////
 //////////////End of Helper Functions///////////////

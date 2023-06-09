@@ -21,8 +21,15 @@ app.use(
 );
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+
 app.get("/", (req, res) => {
-  res.send("Hello");
+  const user_id = req.session.user_id;
+
+  if(!user_id) {
+    return res.redirect("\login");
+  }
+
+  res.redirect("/urls");
 });
 
 ///////////////////////////////////////////////////
@@ -132,22 +139,16 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const user_id = req.session.user_id;
-
-  if (!user_id) {
-    return res.status(400).send("You have to login to view short URL(s)");
-  }
-
   const id = req.params.id;
-  const url = urlsForUser(urlDatabase, user_id);
+  const url = urlDatabase[id];
 
-  if (!url[id]) {
+  if (!url) {
     return res
       .status(400)
       .send("The URL specified does not exist or does not belong to you");
   }
 
-  res.redirect(url[id].longURL);
+  res.redirect(url.longURL);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
