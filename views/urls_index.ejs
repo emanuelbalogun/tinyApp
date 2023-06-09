@@ -20,7 +20,7 @@
     <%- include('partials/_header') %>
     <main style="margin: 1em;">
       <h3>My URLs</h3>
-      <form method="POST" action="/urls/9sm5xK/delete">
+      
       <table class="table">
         <thead>
           <tr>
@@ -33,14 +33,17 @@
             <tr>
               <td><%= item %></td>
               <td><%= urls[item].longURL %></td>
-              <td><a class="btn button" href="/urls/<%= item %>">Edit</a></td>
-              <td><button type="submit">Delete</button></td>
+              <td><a class="btn button" href="/urls/<%= item %>">Edit</a></td>  
+              <td><form method="POST" action="/urls/<%= item %>/delete">
+                <button type="submit">Delete</button>
+              </form> 
+             </td>       
+              
               
             </tr>
           <% } %>
         </tbody>
       </table>
-    </form>
     </main>
     <!-- Bootstrap JS -->
     <script
